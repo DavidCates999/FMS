@@ -488,7 +488,7 @@ def init_mongodb():
     try:
         # Get MongoDB URI from config or Streamlit secrets
         mongodb_uri = get_secret("MONGODB_URI")
-        
+
         if not mongodb_uri:
             st.error("❌ MONGODB_URI not configured. Please set it in Streamlit Cloud Secrets (Settings → Secrets).")
             st.info("""
@@ -497,37 +497,26 @@ def init_mongodb():
 2. Click **Settings** → **Secrets**
 3. Add your secrets in TOML format:
 ```
-MONGODB_URI = "mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority"
+MONGODB_URI = "mongodb+srv://user:pass@cluster0.rdt20jh.mongodb.net/?retryWrites=true&w=majority"
 OPENAI_API_KEY = "sk-..."
 ```
 4. Click **Save** and reboot the app
             """)
             return None
-        
-        # Strip whitespace from URI (trailing spaces cause connection issues)
+
+        # Strip any accidental whitespace/newlines from the URI
         mongodb_uri = mongodb_uri.strip()
-        
-        # Try connection with certifi CA bundle first
-        try:
-            client = MongoClient(
-                mongodb_uri,
-                tls=True,
-                tlsCAFile=certifi.where(),
-                serverSelectionTimeoutMS=30000
-            )
-            client.admin.command('ping')
-            return client
-        except Exception:
-            # Fallback: Skip certificate verification for Streamlit Cloud SSL issues
-            client = MongoClient(
-                mongodb_uri,
-                tls=True,
-                tlsAllowInvalidCertificates=True,
-                serverSelectionTimeoutMS=30000
-            )
-            client.admin.command('ping')
-            return client
-            
+
+        # Use certifi's CA bundle for SSL certificate verification.
+        # This fixes SSL handshake errors on Streamlit Cloud and other platforms.
+        client = MongoClient(
+            mongodb_uri,
+            tls=True,
+            tlsCAFile=certifi.where(),
+            serverSelectionTimeoutMS=30000,
+        )
+        client.admin.command("ping")
+        return client
     except Exception as e:
         st.error(f"Failed to connect to MongoDB: {e}")
         return None
