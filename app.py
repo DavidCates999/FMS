@@ -1,12 +1,13 @@
 import streamlit as st
 import json
 from pymongo import MongoClient
+from pymongo.errors import ServerSelectionTimeoutError, ConfigurationError
 from openai import OpenAI
 import anthropic
 import pandas as pd
 from datetime import datetime
-import ssl
 import certifi
+import ssl
 import config
 
 
@@ -508,41 +509,43 @@ OPENAI_API_KEY = "sk-..."
         # Strip any accidental whitespace/newlines from the URI
         mongodb_uri = mongodb_uri.strip()
 
-        # Log a masked version of the URI for debugging
-        try:
-            safe_uri = mongodb_uri
-            if "@cluster" in safe_uri:
-                # Hide credentials if present
-                safe_uri = "mongodb+srv://***:***@" + safe_uri.split("@", 1)[1]
-            st.write(f"Connecting to MongoDB at: `{safe_uri}`")
-        except Exception:
-            pass
+        # Connection strategies to try (in order)
+        connection_attempts = [
+            # Strategy 1: Use certifi CA bundle (most secure)
+            {
+                "tls": True,
+                "tlsCAFile": certifi.where(),
+                "serverSelectionTimeoutMS": 10000,
+            },
+            # Strategy 2: Skip certificate verification (fallback for Streamlit Cloud SSL issues)
+            {
+                "tls": True,
+                "tlsAllowInvalidCertificates": True,
+                "serverSelectionTimeoutMS": 10000,
+            },
+            # Strategy 3: Minimal TLS config
+            {
+                "tls": True,
+                "tlsInsecure": True,
+                "serverSelectionTimeoutMS": 10000,
+            },
+        ]
 
-        # First attempt: strict TLS with certifi CA bundle (recommended)
-        try:
-            client = MongoClient(
-                mongodb_uri,
-                tls=True,
-                tlsCAFile=certifi.where(),
-                serverSelectionTimeoutMS=30000,
-            )
-            client.admin.command("ping")
-            return client
-        except ssl.SSLError as ssl_err:
-            # If the platform has odd TLS/CA issues, fall back to allowing invalid certs
-            st.warning(
-                "Secure TLS connection to MongoDB failed. "
-                "Retrying without certificate verification (not recommended for production). "
-                f"Details: {ssl_err}"
-            )
-            client = MongoClient(
-                mongodb_uri,
-                tls=True,
-                tlsAllowInvalidCertificates=True,
-                serverSelectionTimeoutMS=30000,
-            )
-            client.admin.command("ping")
-            return client
+        last_error = None
+        for i, conn_opts in enumerate(connection_attempts):
+            try:
+                client = MongoClient(mongodb_uri, **conn_opts)
+                # Test connection
+                client.admin.command("ping")
+                return client
+            except Exception as e:
+                last_error = e
+                continue
+
+        # All strategies failed
+        st.error(f"Failed to connect to MongoDB after trying all connection strategies: {last_error}")
+        return None
+
     except Exception as e:
         st.error(f"Failed to connect to MongoDB: {e}")
         return None

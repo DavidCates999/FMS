@@ -4,9 +4,9 @@
 streamlit>=1.40.0
 
 # Database
-pymongo>=4.9.0
-dnspython>=2.4.0  # Required for MongoDB Atlas (mongodb+srv://) connections
-certifi>=2023.0.0  # Provides CA bundle for TLS/SSL (fixes MongoDB Atlas SSL issues on some platforms)
+pymongo[srv]>=4.6.0  # [srv] includes dnspython for mongodb+srv:// connections
+certifi>=2023.0.0  # Provides CA bundle for TLS/SSL
+pyopenssl>=23.0.0  # Better SSL/TLS support for some platforms
 
 # AI/LLM Providers
 openai>=1.58.0
