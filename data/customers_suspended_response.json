@@ -1,0 +1,26 @@
+{
+  "totalElements": 1,
+  "content": [
+    {
+      "businessLocationId": 53,
+      "businessLocationDateCreated": 1621850300000,
+      "customerKey": "BOT53",
+      "companyName": "Lowney Law",
+      "serviceAddressAddress1": "1234 Hyde Park",
+      "serviceAddressAddress2": null,
+      "serviceAddressCity": "Hyde Park",
+      "serviceAddressState": "MA",
+      "serviceAddressZip": "02136",
+      "primaryContactFirstName": "Accounts",
+      "primaryContactLastName": "Payable",
+      "primaryContactEmail": "",
+      "primaryContactPhone": null,
+      "serviceContractStatus": "SUSPENDED",
+      "primaryContactFullName": " Accounts Payable",
+      "serviceAddressExtension": null,
+      "inspectionPlanName": null,
+      "primaryFlag": "primary"
+    }
+  ],
+  "aggregates": null
+}

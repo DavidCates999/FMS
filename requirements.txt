@@ -1,0 +1,18 @@
+# FMS Query Engine - Streamlit Deployment Requirements
+
+# Web Framework
+streamlit>=1.40.0
+
+# Database
+pymongo>=4.9.0
+dnspython>=2.4.0  # Required for MongoDB Atlas (mongodb+srv://) connections
+
+# AI/LLM Providers
+openai>=1.58.0
+anthropic>=0.40.0
+
+# Data Processing
+pandas>=2.2.0
+
+# Environment Variables
+python-dotenv>=1.0.0
