@@ -764,17 +764,70 @@ def execute_query(db, query_obj):
         return {"success": False, "error": str(e)}
 
 
+# Truncate data for AI summary to prevent context length errors
+def truncate_data_for_summary(data, max_records=5, max_string_length=100, max_total_chars=8000):
+    """
+    Truncate data to fit within AI context limits.
+    - Limits number of records
+    - Truncates long string values
+    - Limits nested depth
+    - Caps total output size
+    """
+    def truncate_value(value, depth=0):
+        if depth > 2:  # Limit nesting depth
+            return "..." if value else value
+        
+        if isinstance(value, str):
+            if len(value) > max_string_length:
+                return value[:max_string_length] + "..."
+            return value
+        elif isinstance(value, dict):
+            # Limit to first 10 keys and truncate values
+            truncated = {}
+            for i, (k, v) in enumerate(value.items()):
+                if i >= 10:
+                    truncated["..."] = f"({len(value) - 10} more fields)"
+                    break
+                truncated[k] = truncate_value(v, depth + 1)
+            return truncated
+        elif isinstance(value, list):
+            if len(value) > 3:
+                return [truncate_value(v, depth + 1) for v in value[:3]] + [f"... ({len(value) - 3} more items)"]
+            return [truncate_value(v, depth + 1) for v in value]
+        else:
+            return value
+    
+    # Take only first few records
+    truncated_data = []
+    for record in data[:max_records]:
+        truncated_record = truncate_value(record)
+        truncated_data.append(truncated_record)
+    
+    # Convert to string and check total size
+    result_str = json.dumps(truncated_data, indent=2, default=str)
+    
+    # If still too large, truncate the string itself
+    if len(result_str) > max_total_chars:
+        result_str = result_str[:max_total_chars] + "\n... (data truncated for brevity)"
+    
+    return result_str
+
+
 # Generate natural language summary of results
 def generate_summary(user_question, query_obj, results, ai_provider="openai", model_name="gpt-4o-mini"):
-    # Limit results for summary
-    sample_data = results["data"][:10]
-    results_str = json.dumps(sample_data, indent=2, default=str)
+    # Truncate results to prevent context length errors
+    results_str = truncate_data_for_summary(
+        results["data"], 
+        max_records=5,           # Only 5 sample records
+        max_string_length=100,   # Truncate long strings
+        max_total_chars=8000     # Max ~2000 tokens worth of data
+    )
     
     prompt = f"""Summarize these query results concisely.
 
 Question: {user_question}
 Records found: {results['count']}
-Sample data: {results_str}
+Sample data (truncated): {results_str}
 
 Provide a brief 2-3 sentence summary answering the question with key facts and numbers."""
 
