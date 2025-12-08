@@ -8,6 +8,19 @@ from datetime import datetime
 import certifi
 import config
 
+
+def get_secret(key, default=None):
+    """Get secret from environment variables or Streamlit secrets"""
+    # First try config (environment variables)
+    value = getattr(config, key, None)
+    if value:
+        return value
+    # Then try Streamlit secrets
+    try:
+        return st.secrets.get(key, default)
+    except (KeyError, FileNotFoundError):
+        return default
+
 # Page Configuration
 st.set_page_config(
     page_title="FMS Query Engine | AI-Powered Analytics",
@@ -471,10 +484,24 @@ st.markdown("""
 @st.cache_resource
 def init_mongodb():
     try:
+        # Get MongoDB URI from config or Streamlit secrets
+        mongodb_uri = config.MONGODB_URI
+        
+        # Try Streamlit secrets if env var not set
+        if not mongodb_uri:
+            try:
+                mongodb_uri = st.secrets["MONGODB_URI"]
+            except (KeyError, FileNotFoundError):
+                mongodb_uri = None
+        
+        if not mongodb_uri:
+            st.error("❌ MONGODB_URI not configured. Please set it in environment variables or Streamlit secrets.")
+            return None
+        
         # Use certifi's CA bundle for SSL certificate verification
         # This fixes SSL handshake errors on Streamlit Cloud and other platforms
         client = MongoClient(
-            config.MONGODB_URI,
+            mongodb_uri,
             tlsCAFile=certifi.where()
         )
         client.admin.command('ping')
@@ -556,7 +583,7 @@ EXAMPLES:
 
     try:
         if ai_provider == "openai":
-            client = OpenAI(api_key=config.OPENAI_API_KEY, timeout=30.0)
+            client = OpenAI(api_key=get_secret("OPENAI_API_KEY"), timeout=30.0)
             response = client.chat.completions.create(
                 model=model_name,
                 messages=[
@@ -568,7 +595,7 @@ EXAMPLES:
             )
             result = response.choices[0].message.content
         else:  # Claude
-            client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+            client = anthropic.Anthropic(api_key=get_secret("ANTHROPIC_API_KEY"))
             response = client.messages.create(
                 model=model_name,
                 max_tokens=500,
@@ -742,7 +769,7 @@ Provide a brief 2-3 sentence summary answering the question with key facts and n
 
     try:
         if ai_provider == "openai":
-            client = OpenAI(api_key=config.OPENAI_API_KEY, timeout=30.0)
+            client = OpenAI(api_key=get_secret("OPENAI_API_KEY"), timeout=30.0)
             response = client.chat.completions.create(
                 model=model_name,
                 messages=[{"role": "user", "content": prompt}],
@@ -751,7 +778,7 @@ Provide a brief 2-3 sentence summary answering the question with key facts and n
             )
             return response.choices[0].message.content
         else:  # Claude
-            client = anthropic.Anthropic(api_key=config.ANTHROPIC_API_KEY)
+            client = anthropic.Anthropic(api_key=get_secret("ANTHROPIC_API_KEY"))
             response = client.messages.create(
                 model=model_name,
                 max_tokens=300,

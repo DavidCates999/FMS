@@ -11,8 +11,8 @@ load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 ANTHROPIC_API_KEY = os.getenv("ANTHROPIC_API_KEY")
 
-# MongoDB Configuration (loaded from .env)
-MONGODB_URI = os.getenv("MONGODB_URI", "mongodb://localhost:27017/")
+# MongoDB Configuration (loaded from .env or Streamlit secrets)
+MONGODB_URI = os.getenv("MONGODB_URI")
 MONGODB_DATABASE = os.getenv("MONGODB_DATABASE", "FMS")
 
 # Available Collections (populated from your data)
