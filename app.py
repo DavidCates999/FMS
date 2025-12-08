@@ -5,6 +5,7 @@ from openai import OpenAI
 import anthropic
 import pandas as pd
 from datetime import datetime
+import ssl
 import certifi
 import config
 
@@ -507,16 +508,41 @@ OPENAI_API_KEY = "sk-..."
         # Strip any accidental whitespace/newlines from the URI
         mongodb_uri = mongodb_uri.strip()
 
-        # Use certifi's CA bundle for SSL certificate verification.
-        # This fixes SSL handshake errors on Streamlit Cloud and other platforms.
-        client = MongoClient(
-            mongodb_uri,
-            tls=True,
-            tlsCAFile=certifi.where(),
-            serverSelectionTimeoutMS=30000,
-        )
-        client.admin.command("ping")
-        return client
+        # Log a masked version of the URI for debugging
+        try:
+            safe_uri = mongodb_uri
+            if "@cluster" in safe_uri:
+                # Hide credentials if present
+                safe_uri = "mongodb+srv://***:***@" + safe_uri.split("@", 1)[1]
+            st.write(f"Connecting to MongoDB at: `{safe_uri}`")
+        except Exception:
+            pass
+
+        # First attempt: strict TLS with certifi CA bundle (recommended)
+        try:
+            client = MongoClient(
+                mongodb_uri,
+                tls=True,
+                tlsCAFile=certifi.where(),
+                serverSelectionTimeoutMS=30000,
+            )
+            client.admin.command("ping")
+            return client
+        except ssl.SSLError as ssl_err:
+            # If the platform has odd TLS/CA issues, fall back to allowing invalid certs
+            st.warning(
+                "Secure TLS connection to MongoDB failed. "
+                "Retrying without certificate verification (not recommended for production). "
+                f"Details: {ssl_err}"
+            )
+            client = MongoClient(
+                mongodb_uri,
+                tls=True,
+                tlsAllowInvalidCertificates=True,
+                serverSelectionTimeoutMS=30000,
+            )
+            client.admin.command("ping")
+            return client
     except Exception as e:
         st.error(f"Failed to connect to MongoDB: {e}")
         return None
