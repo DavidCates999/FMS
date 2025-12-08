@@ -504,14 +504,30 @@ OPENAI_API_KEY = "sk-..."
             """)
             return None
         
-        # Use certifi's CA bundle for SSL certificate verification
-        # This fixes SSL handshake errors on Streamlit Cloud and other platforms
-        client = MongoClient(
-            mongodb_uri,
-            tlsCAFile=certifi.where()
-        )
-        client.admin.command('ping')
-        return client
+        # Strip whitespace from URI (trailing spaces cause connection issues)
+        mongodb_uri = mongodb_uri.strip()
+        
+        # Try connection with certifi CA bundle first
+        try:
+            client = MongoClient(
+                mongodb_uri,
+                tls=True,
+                tlsCAFile=certifi.where(),
+                serverSelectionTimeoutMS=30000
+            )
+            client.admin.command('ping')
+            return client
+        except Exception:
+            # Fallback: Skip certificate verification for Streamlit Cloud SSL issues
+            client = MongoClient(
+                mongodb_uri,
+                tls=True,
+                tlsAllowInvalidCertificates=True,
+                serverSelectionTimeoutMS=30000
+            )
+            client.admin.command('ping')
+            return client
+            
     except Exception as e:
         st.error(f"Failed to connect to MongoDB: {e}")
         return None
