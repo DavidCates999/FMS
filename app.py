@@ -17,9 +17,11 @@ def get_secret(key, default=None):
         return value
     # Then try Streamlit secrets
     try:
-        return st.secrets.get(key, default)
-    except (KeyError, FileNotFoundError):
-        return default
+        if key in st.secrets:
+            return st.secrets[key]
+    except Exception:
+        pass
+    return default
 
 # Page Configuration
 st.set_page_config(
@@ -485,17 +487,21 @@ st.markdown("""
 def init_mongodb():
     try:
         # Get MongoDB URI from config or Streamlit secrets
-        mongodb_uri = config.MONGODB_URI
-        
-        # Try Streamlit secrets if env var not set
-        if not mongodb_uri:
-            try:
-                mongodb_uri = st.secrets["MONGODB_URI"]
-            except (KeyError, FileNotFoundError):
-                mongodb_uri = None
+        mongodb_uri = get_secret("MONGODB_URI")
         
         if not mongodb_uri:
-            st.error("❌ MONGODB_URI not configured. Please set it in environment variables or Streamlit secrets.")
+            st.error("❌ MONGODB_URI not configured. Please set it in Streamlit Cloud Secrets (Settings → Secrets).")
+            st.info("""
+**How to configure:**
+1. Go to your Streamlit Cloud app dashboard
+2. Click **Settings** → **Secrets**
+3. Add your secrets in TOML format:
+```
+MONGODB_URI = "mongodb+srv://user:pass@cluster.mongodb.net/?retryWrites=true&w=majority"
+OPENAI_API_KEY = "sk-..."
+```
+4. Click **Save** and reboot the app
+            """)
             return None
         
         # Use certifi's CA bundle for SSL certificate verification
