@@ -1,13 +1,11 @@
 import streamlit as st
 import json
 from pymongo import MongoClient
-from pymongo.errors import ServerSelectionTimeoutError, ConfigurationError
 from openai import OpenAI
 import anthropic
 import pandas as pd
 from datetime import datetime
 import certifi
-import ssl
 import config
 
 
@@ -509,43 +507,16 @@ OPENAI_API_KEY = "sk-..."
         # Strip any accidental whitespace/newlines from the URI
         mongodb_uri = mongodb_uri.strip()
 
-        # Connection strategies to try (in order)
-        connection_attempts = [
-            # Strategy 1: Use certifi CA bundle (most secure)
-            {
-                "tls": True,
-                "tlsCAFile": certifi.where(),
-                "serverSelectionTimeoutMS": 10000,
-            },
-            # Strategy 2: Skip certificate verification (fallback for Streamlit Cloud SSL issues)
-            {
-                "tls": True,
-                "tlsAllowInvalidCertificates": True,
-                "serverSelectionTimeoutMS": 10000,
-            },
-            # Strategy 3: Minimal TLS config
-            {
-                "tls": True,
-                "tlsInsecure": True,
-                "serverSelectionTimeoutMS": 10000,
-            },
-        ]
-
-        last_error = None
-        for i, conn_opts in enumerate(connection_attempts):
-            try:
-                client = MongoClient(mongodb_uri, **conn_opts)
-                # Test connection
-                client.admin.command("ping")
-                return client
-            except Exception as e:
-                last_error = e
-                continue
-
-        # All strategies failed
-        st.error(f"Failed to connect to MongoDB after trying all connection strategies: {last_error}")
-        return None
-
+        # Use certifi's CA bundle for SSL certificate verification.
+        # This fixes SSL handshake errors on Streamlit Cloud and other platforms.
+        client = MongoClient(
+            mongodb_uri,
+            tls=True,
+            tlsCAFile=certifi.where(),
+            serverSelectionTimeoutMS=30000,
+        )
+        client.admin.command("ping")
+        return client
     except Exception as e:
         st.error(f"Failed to connect to MongoDB: {e}")
         return None
@@ -932,7 +903,8 @@ def main():
         ]
         for icon, q in sample_questions:
             if st.button(f"{icon}  {q}", key=f"sample_{q}", use_container_width=True):
-                st.session_state.user_question = q
+                st.session_state.question_input = q  # Use the same key as the text_area widget
+                st.rerun()  # Refresh UI to show the new value
     
     # Main Content Area
     st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
@@ -949,7 +921,6 @@ def main():
     
     user_question = st.text_area(
         "Enter your question in plain English:",
-        value=st.session_state.get("user_question", ""),
         height=120,
         placeholder="Example: How many active customers do we have? Show me all proposals from last month...",
         key="question_input",
@@ -961,7 +932,7 @@ def main():
         submit_button = st.button("🚀 Execute Query", type="primary", use_container_width=True)
     with col2:
         if st.button("🗑️ Clear", use_container_width=True):
-            st.session_state.user_question = ""
+            st.session_state.question_input = ""  # Use the same key as the text_area widget
             st.rerun()
     
     # Process query
