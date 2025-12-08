@@ -5,6 +5,7 @@ from openai import OpenAI
 import anthropic
 import pandas as pd
 from datetime import datetime
+import certifi
 import config
 
 # Page Configuration
@@ -470,7 +471,12 @@ st.markdown("""
 @st.cache_resource
 def init_mongodb():
     try:
-        client = MongoClient(config.MONGODB_URI)
+        # Use certifi's CA bundle for SSL certificate verification
+        # This fixes SSL handshake errors on Streamlit Cloud and other platforms
+        client = MongoClient(
+            config.MONGODB_URI,
+            tlsCAFile=certifi.where()
+        )
         client.admin.command('ping')
         return client
     except Exception as e:
