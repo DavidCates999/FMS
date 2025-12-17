@@ -660,6 +660,15 @@ def make_case_insensitive(query):
 # Customer collection names (actual names in MongoDB)
 CUSTOMER_COLLECTIONS = ["CustomerActive", "CustomersActivation", "CustomersSuspended", "CustomersTerminated"]
 
+# Mapping of customer type keywords to specific collections
+# Order matters: more specific keywords should be checked first
+CUSTOMER_TYPE_KEYWORDS = {
+    "active": "CustomerActive",
+    "activation": "CustomersActivation",
+    "suspended": "CustomersSuspended",
+    "terminated": "CustomersTerminated",
+}
+
 # Collection name mapping (handles case variations)
 def normalize_collection_name(name, available_collections):
     """Map collection name to actual collection (case-insensitive)"""
@@ -674,6 +683,39 @@ def normalize_collection_name(name, available_collections):
     return name  # Return original if no match
 
 
+def get_customer_collections_for_query(collection_name):
+    """
+    Determine which customer collection(s) to query based on the collection name.
+    
+    Returns:
+        - List with single collection if specific type keyword is found (active, activation, suspended, terminated)
+        - List of all customer collections if generic "customer" is mentioned
+        - None if not a customer-related query
+    
+    Examples:
+        - "customer_active" or "active_customer" → ["CustomerActive"]
+        - "customers_activation" → ["CustomersActivation"]
+        - "suspended_customers" → ["CustomersSuspended"]
+        - "terminated_customer" → ["CustomersTerminated"]
+        - "customer" or "customers" (generic) → all 4 collections
+        - "leads" → None (not a customer query)
+    """
+    name_lower = collection_name.lower()
+    
+    # Check if this is a customer-related query
+    if "customer" not in name_lower:
+        return None  # Not a customer query
+    
+    # Check for specific customer type keywords
+    # Important: Check "activation" before "active" since "activation" contains "active"
+    for keyword in ["activation", "suspended", "terminated", "active"]:
+        if keyword in name_lower:
+            return [CUSTOMER_TYPE_KEYWORDS[keyword]]
+    
+    # Generic "customer" query without specific type - return all collections
+    return CUSTOMER_COLLECTIONS
+
+
 # Execute MongoDB query
 def execute_query(db, query_obj):
     try:
@@ -683,8 +725,12 @@ def execute_query(db, query_obj):
         print("collection_name: ", collection_name)
         operation = query_obj.get("operation", "find")
         
-        # Check if this is a customer-related query that should search all customer collections
-        is_customer_query = "customer" in raw_collection_name.lower()
+        # Determine which customer collections to query (if any)
+        customer_collections = get_customer_collections_for_query(raw_collection_name)
+        is_customer_query = customer_collections is not None
+        
+        print("is_customer_query: ", is_customer_query)
+        print("customer_collections: ", customer_collections)
         
         if operation == "find":
             query = query_obj.get("query", {})
@@ -696,8 +742,8 @@ def execute_query(db, query_obj):
             all_results = []
             
             if is_customer_query:
-                # Search across all customer collections
-                for coll_name in CUSTOMER_COLLECTIONS:
+                # Search across the determined customer collection(s)
+                for coll_name in customer_collections:
                     if coll_name in db.list_collection_names():
                         collection = db[coll_name]
                         cursor = collection.find(query, projection).limit(50)
@@ -723,8 +769,8 @@ def execute_query(db, query_obj):
             
             all_results = []
             if is_customer_query:
-                # Aggregate across all customer collections
-                for coll_name in CUSTOMER_COLLECTIONS:
+                # Aggregate across the determined customer collection(s)
+                for coll_name in customer_collections:
                     if coll_name in db.list_collection_names():
                         collection = db[coll_name]
                         cursor = collection.aggregate(pipeline)
@@ -747,7 +793,7 @@ def execute_query(db, query_obj):
             
             total_count = 0
             if is_customer_query:
-                for coll_name in CUSTOMER_COLLECTIONS:
+                for coll_name in customer_collections:
                     if coll_name in db.list_collection_names():
                         collection = db[coll_name]
                         total_count += collection.count_documents(query)
@@ -1040,12 +1086,15 @@ def main():
                     
                     if results["data"]:
                         df = pd.DataFrame(results["data"])
-                        st.dataframe(df, use_container_width=True, height=400)
+                        # Remove internal/metadata columns from display
+                        columns_to_hide = ['_id', '_importedAt', '_source', '_source_collection']
+                        df_display = df.drop(columns=[col for col in columns_to_hide if col in df.columns])
+                        st.dataframe(df_display, use_container_width=True, height=400)
                         
                         # Download buttons
                         col_a, col_b = st.columns(2)
                         with col_a:
-                            csv = df.to_csv(index=False)
+                            csv = df_display.to_csv(index=False)
                             st.download_button(
                                 label="📥 Download CSV",
                                 data=csv,
@@ -1054,7 +1103,7 @@ def main():
                                 use_container_width=True
                             )
                         with col_b:
-                            json_str = df.to_json(orient='records', indent=2)
+                            json_str = df_display.to_json(orient='records', indent=2)
                             st.download_button(
                                 label="📥 Download JSON",
                                 data=json_str,
