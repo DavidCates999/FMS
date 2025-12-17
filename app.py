@@ -9,6 +9,545 @@ import certifi
 import config
 
 
+# =============================================================================
+# TEST USER CREDENTIALS & SECURITY ROLES
+# =============================================================================
+# 
+# FSM System Role Hierarchy:
+# 
+# 1. SUPER SYSTEM4 ADMIN (Top Level Corporate - CEO, CTO, etc.)
+#    - Highest level access with full control over everything
+#    - Has System4 Admin permissions + additional privileges
+#    - Can manage all 65+ franchises, users, and system settings
+#
+# 2. SYSTEM4 ADMIN (Corporate Staff)
+#    - Company headquarters staff
+#    - Can view/analyze data across ALL franchises
+#    - Example: Corporate managers, analysts, support staff
+#
+# 3. FRANCHISE PARTNER (Franchise Owners)
+#    - Actual franchise owners who own/operate location(s)
+#    - Can see ALL data for their specific franchise location(s)
+#    - Full access within their franchise scope
+#
+# 4. CLIENT ADMIN (Franchise Employees)
+#    - Employees working at a franchise location
+#    - Limited access - currently set to Franchise Partner security level
+#    - Can view franchise data but with restricted permissions
+#
+# =============================================================================
+
+# =============================================================================
+# FRANCHISE TO STATE MAPPING
+# =============================================================================
+# Maps franchise names to their corresponding state codes for data filtering
+# This ensures Franchise Partners and Client Admins only see their location data
+FRANCHISE_STATE_MAPPING = {
+    "Boston": ["MA"],           # Massachusetts
+    "Cleveland": ["OH"],        # Ohio
+    "Chicago": ["IL"],          # Illinois
+    # Add more franchise-to-state mappings as needed
+    # "New York": ["NY"],
+    # "Los Angeles": ["CA"],
+}
+
+# =============================================================================
+# COLLECTION STATE FIELD MAPPING
+# =============================================================================
+# Maps collection names (case-insensitive) to their state field names
+# Different collections use different field names for state
+COLLECTION_STATE_FIELDS = {
+    # Customer collections - use serviceAddressState
+    "customeractive": "serviceAddressState",
+    "customersactivation": "serviceAddressState",
+    "customerssuspended": "serviceAddressState",
+    "customersterminated": "serviceAddressState",
+    # Leads
+    "leads": "serviceAddressState",
+    # Proposals
+    "proposals": "serviceAddressState",
+    # Service contracts - uses companyState
+    "servicecontracts": "companyState",
+    # Service providers - nested field
+    "serviceproviders": "address.state",
+    # RFPs - filter by serviceAddressState if available
+    "rfps": "serviceAddressState",
+    # Collections without location data (shared across all franchises)
+    "spusers": None,
+    "users_inspection": None,
+    "general_ledger": None,
+    "inspection_dashboard": None,
+}
+
+
+TEST_USERS = {
+    # =========================================================================
+    # SUPER SYSTEM4 ADMIN - Top Level Corporate (CEO, CTO, etc.)
+    # Full control over everything
+    # =========================================================================
+    "ceo@system4.com": {
+        "password": "ceo123",
+        "name": "Robert Maxwell",
+        "role": "Super System4 Admin",
+        "permissions": ["all", "system_settings", "user_management", "franchise_management", "financial_reports", "audit_logs"],
+        "franchise": "All Franchises",
+        "avatar": "👑"
+    },
+    "cto@system4.com": {
+        "password": "cto123",
+        "name": "Jennifer Hayes",
+        "role": "Super System4 Admin",
+        "permissions": ["all", "system_settings", "user_management", "franchise_management", "financial_reports", "audit_logs"],
+        "franchise": "All Franchises",
+        "avatar": "🎯"
+    },
+    
+    # =========================================================================
+    # SYSTEM4 ADMIN - Corporate Staff
+    # Can see data across ALL 65+ franchises
+    # =========================================================================
+    "manager@system4.com": {
+        "password": "manager123",
+        "name": "Sarah Mitchell",
+        "role": "System4 Admin",
+        "permissions": ["view_all_franchises", "reports", "analytics", "user_support"],
+        "franchise": "All Franchises",
+        "avatar": "🔧"
+    },
+    "analyst@system4.com": {
+        "password": "analyst123",
+        "name": "Tom Anderson",
+        "role": "System4 Admin",
+        "permissions": ["view_all_franchises", "reports", "analytics"],
+        "franchise": "All Franchises",
+        "avatar": "📊"
+    },
+    "support@system4.com": {
+        "password": "support123",
+        "name": "Emily Chen",
+        "role": "System4 Admin",
+        "permissions": ["view_all_franchises", "user_support", "basic_reports"],
+        "franchise": "All Franchises",
+        "avatar": "🛠️"
+    },
+    
+    # =========================================================================
+    # FRANCHISE PARTNER - Franchise Owners
+    # Can see ALL data for their franchise location(s)
+    # =========================================================================
+    "owner.boston@franchise.com": {
+        "password": "boston123",
+        "name": "Michael O'Brien",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Boston",
+        "avatar": "🏢"
+    },
+    "owner.cleveland@franchise.com": {
+        "password": "cleveland123",
+        "name": "David Kowalski",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Cleveland",
+        "avatar": "🏛️"
+    },
+    "owner.chicago@franchise.com": {
+        "password": "chicago123",
+        "name": "Rachel Thompson",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Chicago",
+        "avatar": "🌆"
+    },
+    
+    # =========================================================================
+    # CLIENT ADMIN - Franchise Employees
+    # Limited access (currently using Franchise Partner security level)
+    # =========================================================================
+    "staff.boston@franchise.com": {
+        "password": "staff123",
+        "name": "Lisa Martinez",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Boston",
+        "avatar": "👤"
+    },
+    "staff.cleveland@franchise.com": {
+        "password": "staff456",
+        "name": "Kevin Johnson",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Cleveland",
+        "avatar": "👨‍💼"
+    }
+}
+
+
+def authenticate_user(email, password):
+    """Authenticate user with test credentials"""
+    if email in TEST_USERS and TEST_USERS[email]["password"] == password:
+        user_data = TEST_USERS[email].copy()
+        user_data["email"] = email
+        del user_data["password"]  # Don't store password in session
+        return user_data
+    return None
+
+
+def get_user_franchise_filter():
+    """
+    Get the franchise filter for the current logged-in user.
+    Returns None if user can see all data, or a list of state codes to filter by.
+    
+    - Super System4 Admin & System4 Admin: See all data (returns None)
+    - Franchise Partner & Client Admin: See only their franchise's data
+    """
+    if not st.session_state.get("logged_in") or not st.session_state.get("user"):
+        return None
+    
+    user = st.session_state.user
+    role = user.get("role", "")
+    franchise = user.get("franchise", "")
+    
+    # Super System4 Admin and System4 Admin can see all data across all franchises
+    if role in ["Super System4 Admin", "System4 Admin"]:
+        return None
+    
+    # Franchise Partner and Client Admin see only their franchise data
+    if role in ["Franchise Partner", "Client Admin"]:
+        if franchise and franchise != "All Franchises":
+            return FRANCHISE_STATE_MAPPING.get(franchise, None)
+    
+    return None
+
+
+def get_state_field_for_collection(collection_name):
+    """
+    Get the state field name for a given collection.
+    Returns None if the collection has no location data.
+    """
+    if not collection_name:
+        return None
+    
+    # Normalize collection name for lookup (lowercase, remove underscores/hyphens)
+    coll_lower = collection_name.lower().replace("_", "").replace("-", "")
+    
+    # Try exact match first
+    if coll_lower in COLLECTION_STATE_FIELDS:
+        return COLLECTION_STATE_FIELDS[coll_lower]
+    
+    # Try partial match for collections
+    for key, field in COLLECTION_STATE_FIELDS.items():
+        if key in coll_lower or coll_lower in key:
+            return field
+    
+    # Default to serviceAddressState for unknown collections that might have location
+    return "serviceAddressState"
+
+
+def build_franchise_filter(franchise_states, state_field):
+    """
+    Build a MongoDB query filter for state-based filtering.
+    Returns None if no filter needed or no state field.
+    
+    Args:
+        franchise_states: List of state codes (e.g., ["MA", "OH"])
+        state_field: The field name containing state data
+    
+    Returns:
+        MongoDB filter condition or None
+    """
+    if not franchise_states or not state_field:
+        return None
+    
+    # Handle nested fields like "address.state"
+    if len(franchise_states) == 1:
+        return {state_field: {"$regex": f"^{franchise_states[0]}$", "$options": "i"}}
+    else:
+        return {
+            "$or": [
+                {state_field: {"$regex": f"^{state}$", "$options": "i"}} 
+                for state in franchise_states
+            ]
+        }
+
+
+def apply_franchise_filter_to_query(query, franchise_states, collection_name):
+    """
+    Apply franchise state filter to an existing MongoDB query.
+    
+    Args:
+        query: The original MongoDB query dict
+        franchise_states: List of state codes to filter by
+        collection_name: Name of the collection being queried
+    
+    Returns:
+        Modified query with franchise filter applied, or original query if no filter needed
+    """
+    if not franchise_states:
+        return query
+    
+    state_field = get_state_field_for_collection(collection_name)
+    if not state_field:
+        return query  # Collection has no location data
+    
+    franchise_filter = build_franchise_filter(franchise_states, state_field)
+    if not franchise_filter:
+        return query
+    
+    # Combine with existing query
+    if query:
+        return {"$and": [query, franchise_filter]}
+    else:
+        return franchise_filter
+
+
+def show_login_page():
+    """Display the login page - Professional & User-Friendly Interface"""
+    
+    # Custom CSS for login page
+    st.markdown("""
+    <style>
+        /* Login Page Specific Styles */
+        .login-wrapper {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 1rem;
+        }
+        
+        .login-hero {
+            text-align: center;
+            padding: 2rem 1rem 1.5rem;
+            margin-bottom: 1rem;
+        }
+        
+        .login-logo-container {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 1rem;
+            background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
+            border-radius: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 2.5rem;
+            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+        }
+        
+        .login-title {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #f1f5f9;
+            margin: 0 0 0.5rem 0;
+            letter-spacing: -0.025em;
+        }
+        
+        .login-subtitle {
+            color: #94a3b8;
+            font-size: 1rem;
+            margin: 0;
+        }
+        
+        /* Manual Login Section */
+        .manual-login-section {
+            background: rgba(30, 41, 59, 0.5);
+            border: 1px solid rgba(255, 255, 255, 0.06);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-top: 1rem;
+        }
+        
+        .manual-login-header {
+            text-align: center;
+            margin-bottom: 1rem;
+        }
+        
+        .manual-login-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin: 0 0 0.25rem 0;
+        }
+        
+        .manual-login-desc {
+            font-size: 0.8rem;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        /* Divider */
+        .divider-pro {
+            display: flex;
+            align-items: center;
+            margin: 1.5rem 0;
+            gap: 1rem;
+        }
+        
+        .divider-pro::before,
+        .divider-pro::after {
+            content: '';
+            flex: 1;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, #334155, transparent);
+        }
+        
+        .divider-pro span {
+            color: #64748b;
+            font-size: 0.8rem;
+            white-space: nowrap;
+        }
+        
+        /* Footer */
+        .login-footer {
+            text-align: center;
+            padding: 1.5rem;
+            color: #64748b;
+            font-size: 0.75rem;
+        }
+        
+        .login-footer a {
+            color: #6366f1;
+            text-decoration: none;
+        }
+    </style>
+    """, unsafe_allow_html=True)
+    
+    # Hero Section
+    st.markdown('<div class="login-hero"><div class="login-logo-container">⚡</div><h1 class="login-title">FMS Query Engine</h1><p class="login-subtitle">AI-Powered Franchise Management Analytics</p></div>', unsafe_allow_html=True)
+    
+    # Create tabs for different login methods
+    tab1, tab2 = st.tabs(["Select Account", "Manual Login"])
+    
+    with tab1:
+        # Clean centered layout
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col2:
+            st.markdown("")
+            
+            # Build user options for selectbox
+            user_options = {}
+            for email, user in TEST_USERS.items():
+                franchise_info = f" ({user['franchise']})" if user.get('franchise') and user['franchise'] != "All Franchises" else ""
+                display_name = f"{user['name']} - {user['role']}{franchise_info}"
+                user_options[display_name] = email
+            
+            # Role filter
+            st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Filter by role:</p>', unsafe_allow_html=True)
+            
+            role_filter = st.selectbox(
+                "Filter by role",
+                ["All Roles", "Super System4 Admin", "System4 Admin", "Franchise Partner", "Client Admin"],
+                label_visibility="collapsed"
+            )
+            
+            # Filter users based on selected role
+            filtered_users = {}
+            for email, user in TEST_USERS.items():
+                if role_filter == "All Roles" or user['role'] == role_filter:
+                    franchise_info = f" ({user['franchise']})" if user.get('franchise') and user['franchise'] != "All Franchises" else ""
+                    display_name = f"{user['name']} - {user['role']}{franchise_info}"
+                    filtered_users[display_name] = email
+            
+            st.markdown("")
+            st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Select an account:</p>', unsafe_allow_html=True)
+            
+            # User selection dropdown
+            selected_display = st.selectbox(
+                "Select account",
+                list(filtered_users.keys()),
+                label_visibility="collapsed"
+            )
+            
+            if selected_display:
+                selected_email = filtered_users[selected_display]
+                selected_user = TEST_USERS[selected_email]
+                
+                # Show selected user info card
+                st.markdown(f'''
+                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
+                    <div style="display: flex; align-items: center; gap: 1rem;">
+                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">{selected_user["avatar"]}</div>
+                        <div>
+                            <p style="color: #f1f5f9; font-size: 1.1rem; font-weight: 600; margin: 0;">{selected_user["name"]}</p>
+                            <p style="color: #a78bfa; font-size: 0.85rem; margin: 0.25rem 0 0 0;">{selected_user["role"]}</p>
+                            <p style="color: #64748b; font-size: 0.75rem; margin: 0.25rem 0 0 0;">{selected_email}</p>
+                        </div>
+                    </div>
+                </div>
+                ''', unsafe_allow_html=True)
+                
+                # Login button
+                if st.button("Sign In", key="quick_login_btn", use_container_width=True, type="primary"):
+                    user_data = authenticate_user(selected_email, selected_user['password'])
+                    if user_data:
+                        st.session_state.logged_in = True
+                        st.session_state.user = user_data
+                        st.rerun()
+    
+    with tab2:
+        st.markdown("")  # Spacing
+        
+        # Center the manual login form
+        col1, col2, col3 = st.columns([1, 2, 1])
+        
+        with col2:
+            st.markdown('<div class="manual-login-header"><p class="manual-login-title">Sign in with your credentials</p><p class="manual-login-desc">Enter your email and password below</p></div>', unsafe_allow_html=True)
+            
+            # Manual Login Form
+            with st.form("login_form", clear_on_submit=False):
+                email = st.text_input(
+                    "Email Address",
+                    placeholder="Enter your email address",
+                    help="Use one of the test account emails"
+                )
+                password = st.text_input(
+                    "Password", 
+                    type="password",
+                    placeholder="Enter your password",
+                    help="Password for the test account"
+                )
+                
+                st.markdown("&nbsp;", unsafe_allow_html=True)
+                submitted = st.form_submit_button("Sign In", use_container_width=True, type="primary")
+                
+                if submitted:
+                    if email and password:
+                        user_data = authenticate_user(email, password)
+                        if user_data:
+                            st.session_state.logged_in = True
+                            st.session_state.user = user_data
+                            st.rerun()
+                        else:
+                            st.error("Invalid email or password. Please try again.")
+                    else:
+                        st.warning("Please enter both email and password.")
+            
+            # Credentials reference
+            with st.expander("📋 View Test Account Credentials"):
+                st.markdown("""
+                **Super System4 Admin:**
+                - `ceo@system4.com` / `ceo123`
+                - `cto@system4.com` / `cto123`
+                
+                **System4 Admin:**
+                - `manager@system4.com` / `manager123`
+                - `analyst@system4.com` / `analyst123`
+                - `support@system4.com` / `support123`
+                
+                **Franchise Partner:**
+                - `owner.boston@franchise.com` / `boston123`
+                - `owner.cleveland@franchise.com` / `cleveland123`
+                - `owner.chicago@franchise.com` / `chicago123`
+                
+                **Client Admin:**
+                - `staff.boston@franchise.com` / `staff123`
+                - `staff.cleveland@franchise.com` / `staff456`
+                """)
+    
+    # Footer
+    st.markdown('<div class="login-footer"><p>FMS Query Engine v2.0 • Powered by AI</p><p>© 2025 System4 Enterprise Analytics</p></div>', unsafe_allow_html=True)
+
+
 def get_secret(key, default=None):
     """Get secret from environment variables or Streamlit secrets"""
     # First try config (environment variables)
@@ -732,6 +1271,10 @@ def execute_query(db, query_obj):
         print("is_customer_query: ", is_customer_query)
         print("customer_collections: ", customer_collections)
         
+        # Get franchise filter for role-based data access
+        franchise_states = get_user_franchise_filter()
+        print("franchise_states filter: ", franchise_states)
+        
         if operation == "find":
             query = query_obj.get("query", {})
             # Make query case-insensitive
@@ -745,17 +1288,25 @@ def execute_query(db, query_obj):
                 # Search across the determined customer collection(s)
                 for coll_name in customer_collections:
                     if coll_name in db.list_collection_names():
+                        # Apply franchise filter for this collection
+                        filtered_query = apply_franchise_filter_to_query(query, franchise_states, coll_name)
+                        print(f"filtered_query for {coll_name}: ", filtered_query)
+                        
                         collection = db[coll_name]
-                        cursor = collection.find(query, projection).limit(50)
+                        cursor = collection.find(filtered_query, projection).limit(50)
                         for doc in cursor:
                             doc['_source_collection'] = coll_name
                             all_results.append(doc)
             else:
+                # Apply franchise filter for single collection
+                filtered_query = apply_franchise_filter_to_query(query, franchise_states, collection_name)
+                print("filtered_query: ", filtered_query)
+                
                 # Search single collection
                 collection = db[collection_name]
-                cursor = collection.find(query, projection).limit(100)
+                cursor = collection.find(filtered_query, projection).limit(100)
                 all_results = list(cursor)
-                print("all_results: ", all_results)
+                print("all_results count: ", len(all_results))
             
             # Convert ObjectId to string for display
             for doc in all_results:
@@ -772,12 +1323,27 @@ def execute_query(db, query_obj):
                 # Aggregate across the determined customer collection(s)
                 for coll_name in customer_collections:
                     if coll_name in db.list_collection_names():
+                        # Inject franchise filter as first $match stage
+                        state_field = get_state_field_for_collection(coll_name)
+                        franchise_filter = build_franchise_filter(franchise_states, state_field)
+                        if franchise_filter:
+                            coll_pipeline = [{"$match": franchise_filter}] + pipeline
+                        else:
+                            coll_pipeline = pipeline
+                        
                         collection = db[coll_name]
-                        cursor = collection.aggregate(pipeline)
+                        cursor = collection.aggregate(coll_pipeline)
                         for doc in cursor:
                             doc['_source_collection'] = coll_name
                             all_results.append(doc)
             else:
+                # Inject franchise filter as first $match stage for single collection
+                state_field = get_state_field_for_collection(collection_name)
+                franchise_filter = build_franchise_filter(franchise_states, state_field)
+                if franchise_filter:
+                    pipeline = [{"$match": franchise_filter}] + pipeline
+                    print("Injected franchise filter into aggregate pipeline")
+                
                 collection = db[collection_name]
                 cursor = collection.aggregate(pipeline)
                 all_results = list(cursor)
@@ -795,11 +1361,15 @@ def execute_query(db, query_obj):
             if is_customer_query:
                 for coll_name in customer_collections:
                     if coll_name in db.list_collection_names():
+                        # Apply franchise filter for this collection
+                        filtered_query = apply_franchise_filter_to_query(query, franchise_states, coll_name)
                         collection = db[coll_name]
-                        total_count += collection.count_documents(query)
+                        total_count += collection.count_documents(filtered_query)
             else:
+                # Apply franchise filter for single collection
+                filtered_query = apply_franchise_filter_to_query(query, franchise_states, collection_name)
                 collection = db[collection_name]
-                total_count = collection.count_documents(query)
+                total_count = collection.count_documents(filtered_query)
             
             return {"success": True, "data": [{"count": total_count}], "count": 1}
         
@@ -901,6 +1471,20 @@ Provide a brief 2-3 sentence summary answering the question with key facts and n
 
 # Main Application
 def main():
+    # Initialize session state for login
+    if 'logged_in' not in st.session_state:
+        st.session_state.logged_in = False
+    if 'user' not in st.session_state:
+        st.session_state.user = None
+    
+    # Show login page if not logged in
+    if not st.session_state.logged_in:
+        show_login_page()
+        return
+    
+    # Get current user
+    user = st.session_state.user
+    
     # Initialize MongoDB first
     mongo_client = init_mongodb()
     
@@ -911,25 +1495,38 @@ def main():
     db = mongo_client[config.MONGODB_DATABASE]
     collections = db.list_collection_names()
     
-    # Hero Header
-    st.markdown("""
+    # Hero Header with user info
+    st.markdown(f"""
     <div class="hero-container">
         <h1 class="hero-title">⚡ FMS Query Engine</h1>
         <p class="hero-subtitle">Transform natural language into powerful database insights with AI</p>
-        <div class="hero-badge">System Online • MongoDB Connected</div>
+        <div class="hero-badge">System Online • MongoDB Connected • {user['role']}</div>
     </div>
     """, unsafe_allow_html=True)
     
     # Sidebar
     with st.sidebar:
-        # Logo/Brand
-        st.markdown("""
-        <div style="text-align: center; padding: 1rem 0 1.5rem 0;">
-            <div style="font-size: 2rem; margin-bottom: 0.25rem;">⚡</div>
-            <div style="font-size: 1.1rem; font-weight: 600; color: #f1f5f9;">FMS Query</div>
-            <div style="font-size: 0.75rem; color: #64748b;">Enterprise Analytics</div>
+        # User Profile Section
+        st.markdown(f"""
+        <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(139, 92, 246, 0.1) 100%); 
+                    border: 1px solid rgba(99, 102, 241, 0.3); 
+                    border-radius: 16px; 
+                    padding: 1.25rem; 
+                    margin-bottom: 1.5rem;
+                    text-align: center;">
+            <div style="font-size: 2.5rem; margin-bottom: 0.5rem;">{user['avatar']}</div>
+            <div style="font-size: 1.1rem; font-weight: 600; color: #f1f5f9;">{user['name']}</div>
+            <div style="font-size: 0.8rem; color: #a78bfa; margin-top: 0.25rem;">{user['role']}</div>
+            <div style="font-size: 0.7rem; color: #64748b; margin-top: 0.25rem;">{user['email']}</div>
+            {f'<div style="font-size: 0.7rem; color: #94a3b8; margin-top: 0.5rem;">🏢 {user["franchise"]}</div>' if user.get('franchise') else ''}
         </div>
         """, unsafe_allow_html=True)
+        
+        # Logout button
+        if st.button("🚪 Logout", use_container_width=True):
+            st.session_state.logged_in = False
+            st.session_state.user = None
+            st.rerun()
         
         st.markdown('<div class="sidebar-header">⚙️ Configuration</div>', unsafe_allow_html=True)
         
@@ -1081,6 +1678,12 @@ def main():
                         </div>
                     </div>
                     """, unsafe_allow_html=True)
+                    
+                    # Show franchise filter notice for restricted users
+                    franchise_states = get_user_franchise_filter()
+                    if franchise_states:
+                        franchise_name = user.get('franchise', 'Your Franchise')
+                        st.info(f"🏢 **{franchise_name} Data Only** — Results filtered to your franchise location ({', '.join(franchise_states)})")
                     
                     st.success(f"✅ Found **{results['count']}** records")
                     
