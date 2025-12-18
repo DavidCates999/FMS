@@ -1107,6 +1107,19 @@ def get_database_schema(db):
     return schema
 
 
+# Cache database stats to avoid slow queries on every rerun
+@st.cache_data(ttl=300)  # Cache for 5 minutes
+def get_database_stats(_db, _collections):
+    """Get total document count and per-collection counts (cached)"""
+    collection_counts = {}
+    total = 0
+    for coll in _collections:
+        count = _db[coll].count_documents({})
+        collection_counts[coll] = count
+        total += count
+    return total, collection_counts
+
+
 # Generate MongoDB query using AI
 def generate_mongo_query(user_question, schema, ai_provider="openai", model_name="gpt-4o-mini"):
     schema_str = json.dumps(schema, indent=2, default=str)
@@ -1558,8 +1571,8 @@ def main():
         
         st.markdown('<div class="sidebar-header">📊 Database</div>', unsafe_allow_html=True)
         
-        # Database Stats
-        total_docs = sum(db[c].count_documents({}) for c in collections)
+        # Database Stats (cached to avoid slow reloads)
+        total_docs, collection_counts = get_database_stats(db, tuple(collections))
         col1, col2 = st.columns(2)
         with col1:
             st.markdown(f"""
@@ -1578,7 +1591,7 @@ def main():
         
         with st.expander("📁 View Collections", expanded=False):
             for coll in sorted(collections):
-                count = db[coll].count_documents({})
+                count = collection_counts.get(coll, 0)
                 st.markdown(f"""
                 <div style="display: flex; justify-content: space-between; padding: 0.5rem 0; border-bottom: 1px solid #334155;">
                     <span style="color: #f1f5f9; font-size: 0.85rem;">{coll}</span>
