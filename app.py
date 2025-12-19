@@ -1703,7 +1703,7 @@ def main():
                     if results["data"]:
                         df = pd.DataFrame(results["data"])
                         # Remove internal/metadata columns from display
-                        columns_to_hide = ['_id', '_importedAt', '_source', '_source_collection']
+                        columns_to_hide = ['_id', '_importedAt', '_source', '_source_collection', 'businessLocationId', 'businessLocationDateCreated', 'customerKey']
                         df_display = df.drop(columns=[col for col in columns_to_hide if col in df.columns])
                         st.dataframe(df_display, use_container_width=True, height=400)
                         
