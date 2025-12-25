@@ -1,0 +1,32 @@
+# Git
+.git
+.gitignore
+
+# Python
+__pycache__
+*.py[cod]
+*$py.class
+*.so
+.Python
+.env
+.venv
+env/
+venv/
+ENV/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# Playwright/Browser
+.playwright-mcp/
+
+# Local data files (if any sensitive data)
+*.log
+
+# OS
+.DS_Store
+Thumbs.db
+
