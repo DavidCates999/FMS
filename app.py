@@ -46,9 +46,13 @@ FRANCHISE_STATE_MAPPING = {
     "Boston": ["MA"],           # Massachusetts
     "Cleveland": ["OH"],        # Ohio
     "Chicago": ["IL"],          # Illinois
-    # Add more franchise-to-state mappings as needed
-    # "New York": ["NY"],
-    # "Los Angeles": ["CA"],
+    "Charleston": ["SC"],       # South Carolina
+    "Columbia": ["SC"],         # South Carolina
+    "Georgia": ["GA"],          # Georgia
+    "Maryland": ["MD"],         # Maryland
+    "Northern VA": ["VA"],      # Virginia
+    "Richmond": ["VA"],         # Virginia
+    "Washington DC": ["DC"],    # District of Columbia
 }
 
 # =============================================================================
@@ -159,6 +163,62 @@ TEST_USERS = {
         "franchise": "Chicago",
         "avatar": "🌆"
     },
+    "owner.charleston@franchise.com": {
+        "password": "charleston123",
+        "name": "William Parker",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Charleston",
+        "avatar": "🌴"
+    },
+    "owner.columbia@franchise.com": {
+        "password": "columbia123",
+        "name": "Amanda Foster",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Columbia",
+        "avatar": "🏛️"
+    },
+    "owner.georgia@franchise.com": {
+        "password": "georgia123",
+        "name": "James Wilson",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Georgia",
+        "avatar": "🍑"
+    },
+    "owner.maryland@franchise.com": {
+        "password": "maryland123",
+        "name": "Patricia Brown",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Maryland",
+        "avatar": "🦀"
+    },
+    "owner.nova@franchise.com": {
+        "password": "nova123",
+        "name": "Christopher Davis",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Northern VA",
+        "avatar": "🏢"
+    },
+    "owner.richmond@franchise.com": {
+        "password": "richmond123",
+        "name": "Elizabeth Turner",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Richmond",
+        "avatar": "🏰"
+    },
+    "owner.dc@franchise.com": {
+        "password": "dc123",
+        "name": "Robert Harris",
+        "role": "Franchise Partner",
+        "permissions": ["view_franchise", "manage_franchise", "franchise_reports", "manage_employees"],
+        "franchise": "Washington DC",
+        "avatar": "🏛️"
+    },
     
     # =========================================================================
     # CLIENT ADMIN - Franchise Employees
@@ -179,6 +239,62 @@ TEST_USERS = {
         "permissions": ["view_franchise", "basic_reports"],
         "franchise": "Cleveland",
         "avatar": "👨‍💼"
+    },
+    "staff.charleston@franchise.com": {
+        "password": "staff789",
+        "name": "Maria Rodriguez",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Charleston",
+        "avatar": "👩‍💼"
+    },
+    "staff.columbia@franchise.com": {
+        "password": "staff101",
+        "name": "Daniel Lee",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Columbia",
+        "avatar": "👤"
+    },
+    "staff.georgia@franchise.com": {
+        "password": "staff102",
+        "name": "Ashley Clark",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Georgia",
+        "avatar": "👩"
+    },
+    "staff.maryland@franchise.com": {
+        "password": "staff103",
+        "name": "Ryan Moore",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Maryland",
+        "avatar": "👨"
+    },
+    "staff.nova@franchise.com": {
+        "password": "staff104",
+        "name": "Jessica White",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Northern VA",
+        "avatar": "👩‍💻"
+    },
+    "staff.richmond@franchise.com": {
+        "password": "staff105",
+        "name": "Brandon Taylor",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Richmond",
+        "avatar": "👨‍💻"
+    },
+    "staff.dc@franchise.com": {
+        "password": "staff106",
+        "name": "Nicole Adams",
+        "role": "Client Admin",
+        "permissions": ["view_franchise", "basic_reports"],
+        "franchise": "Washington DC",
+        "avatar": "👩‍🏫"
     }
 }
 
@@ -198,25 +314,9 @@ def get_user_franchise_filter():
     Get the franchise filter for the current logged-in user.
     Returns None if user can see all data, or a list of state codes to filter by.
     
-    - Super System4 Admin & System4 Admin: See all data (returns None)
-    - Franchise Partner & Client Admin: See only their franchise's data
+    Currently disabled - all users can see all data regardless of role.
     """
-    if not st.session_state.get("logged_in") or not st.session_state.get("user"):
-        return None
-    
-    user = st.session_state.user
-    role = user.get("role", "")
-    franchise = user.get("franchise", "")
-    
-    # Super System4 Admin and System4 Admin can see all data across all franchises
-    if role in ["Super System4 Admin", "System4 Admin"]:
-        return None
-    
-    # Franchise Partner and Client Admin see only their franchise data
-    if role in ["Franchise Partner", "Client Admin"]:
-        if franchise and franchise != "All Franchises":
-            return FRANCHISE_STATE_MAPPING.get(franchise, None)
-    
+    # Filtering disabled - all roles see all data
     return None
 
 
@@ -958,6 +1058,57 @@ st.markdown("""
         margin: 2rem 0;
     }
     
+    /* Tabs Styling */
+    .stTabs {
+        background: transparent;
+    }
+    
+    .stTabs [data-baseweb="tab-list"] {
+        background: rgba(30, 41, 59, 0.6);
+        border-radius: 16px;
+        padding: 6px;
+        gap: 6px;
+        border: 1px solid var(--border);
+    }
+    
+    .stTabs [data-baseweb="tab"] {
+        background: transparent !important;
+        border-radius: 12px !important;
+        color: var(--text-secondary) !important;
+        font-weight: 500 !important;
+        font-size: 0.95rem !important;
+        padding: 0.75rem 1.5rem !important;
+        border: none !important;
+        transition: all 0.3s ease !important;
+    }
+    
+    .stTabs [data-baseweb="tab"]:hover {
+        background: rgba(99, 102, 241, 0.1) !important;
+        color: var(--text-primary) !important;
+    }
+    
+    .stTabs [aria-selected="true"] {
+        background: var(--gradient-1) !important;
+        color: white !important;
+        box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3) !important;
+    }
+    
+    .stTabs [data-baseweb="tab-highlight"] {
+        display: none !important;
+    }
+    
+    .stTabs [data-baseweb="tab-border"] {
+        display: none !important;
+    }
+    
+    .stTabs [data-baseweb="tab-panel"] {
+        background: rgba(30, 41, 59, 0.4);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 1.5rem;
+        margin-top: 1rem;
+    }
+    
     /* Footer */
     .footer {
         text-align: center;
@@ -1661,58 +1812,131 @@ def main():
             if "raw" in query_obj:
                 st.code(query_obj["raw"], language="text")
         else:
-            # Generated Query Display
-            st.markdown("""
-            <div class="glass-card">
-                <div class="card-title">
-                    <div class="card-title-icon">⚙️</div>
-                    Generated MongoDB Query
-                </div>
-            </div>
-            """, unsafe_allow_html=True)
-            st.code(json.dumps(query_obj, indent=2), language="json")
-            
-            # Execute query
+            # Execute query first to get results
             with st.spinner("⚡ Executing query on database..."):
                 results = execute_query(db, query_obj)
             
+            # Generate AI insights
+            summary = ""
             if results["success"]:
-                st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+                with st.spinner("🧠 Generating insights..."):
+                    summary = generate_summary(user_question, query_obj, results, ai_provider)
+            
+            # Results Header with status
+            st.markdown('<div class="section-divider"></div>', unsafe_allow_html=True)
+            
+            if results["success"]:
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem 1.5rem; background: linear-gradient(135deg, rgba(34, 197, 94, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%); border: 1px solid rgba(34, 197, 94, 0.3); border-radius: 12px;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #22c55e, #10b981); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">✓</div>
+                    <div>
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #f1f5f9;">Query Executed Successfully</div>
+                        <div style="font-size: 0.9rem; color: #94a3b8;">Found <span style="color: #22c55e; font-weight: 600;">{results['count']}</span> records in <span style="color: #6366f1; font-weight: 500;">{query_obj.get('collection', 'N/A')}</span></div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            else:
+                st.markdown(f"""
+                <div style="display: flex; align-items: center; gap: 1rem; margin-bottom: 1.5rem; padding: 1rem 1.5rem; background: linear-gradient(135deg, rgba(239, 68, 68, 0.1) 0%, rgba(220, 38, 38, 0.05) 100%); border: 1px solid rgba(239, 68, 68, 0.3); border-radius: 12px;">
+                    <div style="width: 48px; height: 48px; background: linear-gradient(135deg, #ef4444, #dc2626); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">✗</div>
+                    <div>
+                        <div style="font-size: 1.25rem; font-weight: 600; color: #f1f5f9;">Query Execution Failed</div>
+                        <div style="font-size: 0.9rem; color: #fca5a5;">{results.get('error', 'Unknown error')}</div>
+                    </div>
+                </div>
+                """, unsafe_allow_html=True)
+            
+            # Create 3 tabs for organized results display (MongoDB Query first, then Results, then AI Insights)
+            tab1, tab2, tab3 = st.tabs(["⚙️ MongoDB Query", "📊 Query Results", "💬 AI Insights"])
+            
+            # Tab 1: Generated MongoDB Query
+            with tab1:
+                st.markdown("""
+                <div style="margin-bottom: 1rem;">
+                    <h4 style="color: #f1f5f9; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.25rem;">🔧</span> Generated MongoDB Query
+                    </h4>
+                    <p style="color: #94a3b8; font-size: 0.875rem; margin: 0;">AI-generated query based on your natural language input</p>
+                </div>
+                """, unsafe_allow_html=True)
                 
-                # Results section - Two columns
-                result_col1, result_col2 = st.columns([1.2, 1])
+                st.code(json.dumps(query_obj, indent=2), language="json")
                 
-                with result_col1:
-                    st.markdown("""
-                    <div class="glass-card">
-                        <div class="card-title">
-                            <div class="card-title-icon">📊</div>
-                            Query Results
-                        </div>
+                # Query Details Cards
+                st.markdown("""
+                <div style="margin-top: 1.5rem; margin-bottom: 1rem;">
+                    <h4 style="color: #f1f5f9; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                        <span style="font-size: 1.25rem;">📋</span> Query Parameters
+                    </h4>
+                </div>
+                """, unsafe_allow_html=True)
+                
+                col1, col2, col3, col4 = st.columns(4)
+                with col1:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.15) 0%, rgba(139, 92, 246, 0.08) 100%); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 12px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Collection</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #a5b4fc;">{query_obj.get("collection", "N/A")}</div>
                     </div>
                     """, unsafe_allow_html=True)
-                    
-                    # Show franchise filter notice for restricted users
-                    franchise_states = get_user_franchise_filter()
-                    if franchise_states:
-                        franchise_name = user.get('franchise', 'Your Franchise')
-                        st.info(f"🏢 **{franchise_name} Data Only** — Results filtered to your franchise location ({', '.join(franchise_states)})")
-                    
-                    st.success(f"✅ Found **{results['count']}** records")
-                    
+                with col2:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, rgba(14, 165, 233, 0.15) 0%, rgba(6, 182, 212, 0.08) 100%); border: 1px solid rgba(14, 165, 233, 0.3); border-radius: 12px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Operation</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #7dd3fc;">{query_obj.get("operation", "N/A")}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col3:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, rgba(16, 185, 129, 0.15) 0%, rgba(34, 197, 94, 0.08) 100%); border: 1px solid rgba(16, 185, 129, 0.3); border-radius: 12px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Limit</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #6ee7b7;">{query_obj.get("limit", "N/A")}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                with col4:
+                    st.markdown(f"""
+                    <div style="background: linear-gradient(135deg, rgba(245, 158, 11, 0.15) 0%, rgba(251, 191, 36, 0.08) 100%); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 12px; padding: 1rem; text-align: center;">
+                        <div style="font-size: 0.75rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem;">Results</div>
+                        <div style="font-size: 1.1rem; font-weight: 600; color: #fcd34d;">{results.get('count', 0)}</div>
+                    </div>
+                    """, unsafe_allow_html=True)
+            
+            # Tab 2: Query Results
+            with tab2:
+                if results["success"]:
                     if results["data"]:
                         df = pd.DataFrame(results["data"])
                         # Remove internal/metadata columns from display
                         columns_to_hide = ['_id', '_importedAt', '_source', '_source_collection', 'businessLocationId', 'businessLocationDateCreated', 'customerKey']
                         df_display = df.drop(columns=[col for col in columns_to_hide if col in df.columns])
-                        st.dataframe(df_display, use_container_width=True, height=400)
                         
-                        # Download buttons
-                        col_a, col_b = st.columns(2)
+                        # Results info bar
+                        st.markdown(f"""
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; padding: 0.75rem 1rem; background: rgba(30, 41, 59, 0.6); border-radius: 10px; border: 1px solid #334155;">
+                            <div style="display: flex; align-items: center; gap: 1rem;">
+                                <span style="color: #94a3b8; font-size: 0.875rem;">📊 Showing <span style="color: #f1f5f9; font-weight: 600;">{len(df_display)}</span> records</span>
+                                <span style="color: #475569;">|</span>
+                                <span style="color: #94a3b8; font-size: 0.875rem;">📁 <span style="color: #a5b4fc; font-weight: 500;">{len(df_display.columns)}</span> columns</span>
+                            </div>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        st.dataframe(df_display, use_container_width=True, height=450)
+                        
+                        # Export section
+                        st.markdown("""
+                        <div style="margin-top: 1.5rem; margin-bottom: 1rem;">
+                            <h4 style="color: #f1f5f9; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem;">
+                                <span style="font-size: 1.25rem;">📥</span> Export Data
+                            </h4>
+                        </div>
+                        """, unsafe_allow_html=True)
+                        
+                        col_a, col_b, col_c = st.columns([1, 1, 2])
                         with col_a:
                             csv = df_display.to_csv(index=False)
                             st.download_button(
-                                label="📥 Download CSV",
+                                label="📄 Download CSV",
                                 data=csv,
                                 file_name=f"fms_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.csv",
                                 mime="text/csv",
@@ -1721,33 +1945,58 @@ def main():
                         with col_b:
                             json_str = df_display.to_json(orient='records', indent=2)
                             st.download_button(
-                                label="📥 Download JSON",
+                                label="📋 Download JSON",
                                 data=json_str,
                                 file_name=f"fms_results_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json",
                                 mime="application/json",
                                 use_container_width=True
                             )
-                
-                with result_col2:
-                    st.markdown("""
-                    <div class="glass-card">
-                        <div class="card-title">
-                            <div class="card-title-icon">💬</div>
-                            AI Insights
+                    else:
+                        st.markdown("""
+                        <div style="text-align: center; padding: 3rem 2rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px dashed #475569;">
+                            <div style="font-size: 3rem; margin-bottom: 1rem;">📭</div>
+                            <div style="font-size: 1.1rem; color: #f1f5f9; font-weight: 500; margin-bottom: 0.5rem;">No Data Found</div>
+                            <div style="font-size: 0.875rem; color: #94a3b8;">The query executed successfully but returned no results.</div>
                         </div>
+                        """, unsafe_allow_html=True)
+                else:
+                    st.error(f"❌ Query execution failed: {results['error']}")
+            
+            # Tab 3: AI Insights
+            with tab3:
+                if results["success"]:
+                    st.markdown("""
+                    <div style="margin-bottom: 1rem;">
+                        <h4 style="color: #f1f5f9; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;">
+                            <span style="font-size: 1.25rem;">🧠</span> AI Analysis & Insights
+                        </h4>
+                        <p style="color: #94a3b8; font-size: 0.875rem; margin: 0;">Intelligent summary generated by AI based on your query results</p>
                     </div>
                     """, unsafe_allow_html=True)
                     
-                    with st.spinner("🧠 Generating insights..."):
-                        summary = generate_summary(user_question, query_obj, results, ai_provider)
-                    
                     st.markdown(f"""
-                    <div class="result-box">
+                    <div style="background: linear-gradient(135deg, rgba(99, 102, 241, 0.08) 0%, rgba(139, 92, 246, 0.04) 100%); border: 1px solid rgba(99, 102, 241, 0.2); border-left: 4px solid #6366f1; border-radius: 12px; padding: 1.5rem; color: #f1f5f9; font-size: 1rem; line-height: 1.8;">
                         {summary}
                     </div>
                     """, unsafe_allow_html=True)
-            else:
-                st.error(f"❌ Query execution failed: {results['error']}")
+                    
+                    # Quick stats from AI
+                    st.markdown("""
+                    <div style="margin-top: 1.5rem; padding: 1rem; background: rgba(30, 41, 59, 0.5); border-radius: 10px; border: 1px solid #334155;">
+                        <div style="display: flex; align-items: center; gap: 0.5rem; color: #94a3b8; font-size: 0.8rem;">
+                            <span>💡</span>
+                            <span>AI insights are generated based on the query results and may provide additional context and analysis.</span>
+                        </div>
+                    </div>
+                    """, unsafe_allow_html=True)
+                else:
+                    st.markdown("""
+                    <div style="text-align: center; padding: 3rem 2rem; background: rgba(30, 41, 59, 0.5); border-radius: 12px; border: 1px dashed #475569;">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+                        <div style="font-size: 1.1rem; color: #f1f5f9; font-weight: 500; margin-bottom: 0.5rem;">Insights Unavailable</div>
+                        <div style="font-size: 0.875rem; color: #94a3b8;">AI insights cannot be generated due to query execution error.</div>
+                    </div>
+                    """, unsafe_allow_html=True)
     
     # Footer
     st.markdown("""
@@ -1756,7 +2005,8 @@ def main():
             <span>⚡ FMS Query Engine</span>
         </div>
         <div>Powered by OpenAI GPT-4 & Anthropic Claude • MongoDB Backend</div>
-        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #475569;">
+        <div style="margin-top: 0.5rem; font-size: 0.75rem; color: #475
+        569;">
             © 2025 Enterprise Analytics Suite • Version 2.0
         </div>
     </div>
