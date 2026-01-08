@@ -416,35 +416,69 @@ def show_login_page():
         
         .login-hero {
             text-align: center;
-            padding: 2rem 1rem 1.5rem;
-            margin-bottom: 1rem;
+            padding: 3rem 1rem 2rem;
+            margin-bottom: 1.5rem;
+            background: linear-gradient(180deg, rgba(99, 102, 241, 0.1) 0%, transparent 100%);
+            border-radius: 24px;
         }
         
         .login-logo-container {
-            width: 80px;
-            height: 80px;
-            margin: 0 auto 1rem;
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 1.5rem;
             background: linear-gradient(135deg, #6366f1 0%, #8b5cf6 50%, #a855f7 100%);
-            border-radius: 20px;
+            border-radius: 24px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 2.5rem;
-            box-shadow: 0 10px 40px rgba(99, 102, 241, 0.3);
+            font-size: 3rem;
+            box-shadow: 0 20px 60px rgba(99, 102, 241, 0.4);
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
         }
         
         .login-title {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: 700;
             color: #f1f5f9;
-            margin: 0 0 0.5rem 0;
+            margin: 0 0 0.75rem 0;
             letter-spacing: -0.025em;
         }
         
         .login-subtitle {
             color: #94a3b8;
-            font-size: 1rem;
-            margin: 0;
+            font-size: 1.1rem;
+            margin: 0 0 1rem 0;
+        }
+        
+        .login-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: rgba(34, 197, 94, 0.15);
+            border: 1px solid rgba(34, 197, 94, 0.3);
+            padding: 8px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            color: #22c55e;
+        }
+        
+        .login-badge::before {
+            content: '';
+            width: 8px;
+            height: 8px;
+            background: #22c55e;
+            border-radius: 50%;
+            animation: pulse-dot 2s ease-in-out infinite;
+        }
+        
+        @keyframes pulse-dot {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.5; transform: scale(0.8); }
         }
         
         /* Manual Login Section */
@@ -458,20 +492,89 @@ def show_login_page():
         
         .manual-login-header {
             text-align: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.5rem;
         }
         
         .manual-login-title {
-            font-size: 0.9rem;
+            font-size: 1.1rem;
             font-weight: 600;
             color: #f1f5f9;
-            margin: 0 0 0.25rem 0;
+            margin: 0 0 0.5rem 0;
         }
         
         .manual-login-desc {
-            font-size: 0.8rem;
+            font-size: 0.875rem;
             color: #64748b;
             margin: 0;
+        }
+        
+        /* Credential Card Styles */
+        .cred-section {
+            margin-bottom: 1.5rem;
+        }
+        
+        .cred-section-header {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        
+        .cred-section-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1rem;
+        }
+        
+        .cred-section-title {
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #f1f5f9;
+            margin: 0;
+        }
+        
+        .cred-section-desc {
+            font-size: 0.75rem;
+            color: #64748b;
+            margin: 0;
+        }
+        
+        .cred-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0.5rem 0.75rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            margin-bottom: 0.5rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.2s ease;
+        }
+        
+        .cred-item:hover {
+            background: rgba(99, 102, 241, 0.1);
+            border-color: rgba(99, 102, 241, 0.2);
+        }
+        
+        .cred-email {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #a5b4fc;
+        }
+        
+        .cred-password {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.75rem;
+            color: #fcd34d;
+            background: rgba(251, 191, 36, 0.1);
+            padding: 2px 8px;
+            border-radius: 4px;
         }
         
         /* Divider */
@@ -499,30 +602,54 @@ def show_login_page():
         /* Footer */
         .login-footer {
             text-align: center;
-            padding: 1.5rem;
+            padding: 2rem 1rem;
             color: #64748b;
-            font-size: 0.75rem;
+            font-size: 0.8rem;
+            border-top: 1px solid rgba(255, 255, 255, 0.05);
+            margin-top: 2rem;
+        }
+        
+        .login-footer p {
+            margin: 0.25rem 0;
         }
         
         .login-footer a {
             color: #6366f1;
             text-decoration: none;
         }
+        
+        /* Login Tabs Styling */
+        .stTabs [data-baseweb="tab-list"] {
+            justify-content: center;
+            gap: 0.5rem;
+        }
     </style>
     """, unsafe_allow_html=True)
     
     # Hero Section
-    st.markdown('<div class="login-hero"><div class="login-logo-container">⚡</div><h1 class="login-title">FMS Query Engine</h1><p class="login-subtitle">AI-Powered Franchise Management Analytics</p></div>', unsafe_allow_html=True)
+    st.markdown('''
+    <div class="login-hero">
+        <div class="login-logo-container">⚡</div>
+        <h1 class="login-title">FMS Query Engine</h1>
+        <p class="login-subtitle">AI-Powered Franchise Management Analytics</p>
+        <div class="login-badge">System Online • Ready to Connect</div>
+    </div>
+    ''', unsafe_allow_html=True)
     
     # Create tabs for different login methods
-    tab1, tab2 = st.tabs(["Select Account", "Manual Login"])
+    tab1, tab2 = st.tabs(["👥 Select Account", "🔐 Manual Login"])
     
     with tab1:
         # Clean centered layout
-        col1, col2, col3 = st.columns([1, 2, 1])
+        col1, col2, col3 = st.columns([1, 2.5, 1])
         
         with col2:
-            st.markdown("")
+            st.markdown("""
+            <div style="text-align: center; margin-bottom: 1.5rem;">
+                <p style="color: #f1f5f9; font-size: 1.1rem; font-weight: 500; margin: 0 0 0.5rem 0;">Quick Account Selection</p>
+                <p style="color: #64748b; font-size: 0.875rem; margin: 0;">Choose a role and select an account to sign in instantly</p>
+            </div>
+            """, unsafe_allow_html=True)
             
             # Build user options for selectbox
             user_options = {}
@@ -531,8 +658,8 @@ def show_login_page():
                 display_name = f"{user['name']} - {user['role']}{franchise_info}"
                 user_options[display_name] = email
             
-            # Role filter
-            st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Filter by role:</p>', unsafe_allow_html=True)
+            # Role filter with icon
+            st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><span>🏷️</span> Filter by role:</p>', unsafe_allow_html=True)
             
             role_filter = st.selectbox(
                 "Filter by role",
@@ -545,11 +672,11 @@ def show_login_page():
             for email, user in TEST_USERS.items():
                 if role_filter == "All Roles" or user['role'] == role_filter:
                     franchise_info = f" ({user['franchise']})" if user.get('franchise') and user['franchise'] != "All Franchises" else ""
-                    display_name = f"{user['name']} - {user['role']}{franchise_info}"
+                    display_name = f"{user['avatar']} {user['name']} - {user['role']}{franchise_info}"
                     filtered_users[display_name] = email
             
             st.markdown("")
-            st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem;">Select an account:</p>', unsafe_allow_html=True)
+            st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.5rem; display: flex; align-items: center; gap: 0.5rem;"><span>👤</span> Select an account:</p>', unsafe_allow_html=True)
             
             # User selection dropdown
             selected_display = st.selectbox(
@@ -562,22 +689,37 @@ def show_login_page():
                 selected_email = filtered_users[selected_display]
                 selected_user = TEST_USERS[selected_email]
                 
+                # Role color mapping
+                role_colors = {
+                    "Super System4 Admin": ("linear-gradient(135deg, #fbbf24, #f59e0b)", "#fbbf24"),
+                    "System4 Admin": ("linear-gradient(135deg, #6366f1, #8b5cf6)", "#a78bfa"),
+                    "Franchise Partner": ("linear-gradient(135deg, #10b981, #059669)", "#34d399"),
+                    "Client Admin": ("linear-gradient(135deg, #0ea5e9, #0284c7)", "#38bdf8")
+                }
+                bg_gradient, text_color = role_colors.get(selected_user["role"], ("linear-gradient(135deg, #6366f1, #8b5cf6)", "#a78bfa"))
+                
                 # Show selected user info card
                 st.markdown(f'''
-                <div style="background: rgba(99, 102, 241, 0.1); border: 1px solid rgba(99, 102, 241, 0.2); border-radius: 12px; padding: 1.25rem; margin: 1rem 0;">
-                    <div style="display: flex; align-items: center; gap: 1rem;">
-                        <div style="width: 50px; height: 50px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem;">{selected_user["avatar"]}</div>
-                        <div>
-                            <p style="color: #f1f5f9; font-size: 1.1rem; font-weight: 600; margin: 0;">{selected_user["name"]}</p>
-                            <p style="color: #a78bfa; font-size: 0.85rem; margin: 0.25rem 0 0 0;">{selected_user["role"]}</p>
-                            <p style="color: #64748b; font-size: 0.75rem; margin: 0.25rem 0 0 0;">{selected_email}</p>
+                <div style="background: rgba(30, 41, 59, 0.8); border: 1px solid rgba(99, 102, 241, 0.3); border-radius: 16px; padding: 1.5rem; margin: 1.5rem 0; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);">
+                    <div style="display: flex; align-items: center; gap: 1.25rem;">
+                        <div style="width: 64px; height: 64px; background: {bg_gradient}; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 2rem; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);">{selected_user["avatar"]}</div>
+                        <div style="flex: 1;">
+                            <p style="color: #f1f5f9; font-size: 1.25rem; font-weight: 600; margin: 0;">{selected_user["name"]}</p>
+                            <p style="color: {text_color}; font-size: 0.9rem; font-weight: 500; margin: 0.25rem 0 0 0;">{selected_user["role"]}</p>
+                            <p style="color: #64748b; font-size: 0.8rem; margin: 0.5rem 0 0 0; font-family: monospace;">{selected_email}</p>
+                        </div>
+                    </div>
+                    <div style="margin-top: 1rem; padding-top: 1rem; border-top: 1px solid rgba(255, 255, 255, 0.1);">
+                        <div style="display: flex; gap: 1rem; flex-wrap: wrap;">
+                            <span style="background: rgba(99, 102, 241, 0.15); color: #a5b4fc; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem;">📍 {selected_user.get("franchise", "N/A")}</span>
+                            <span style="background: rgba(34, 197, 94, 0.15); color: #86efac; padding: 4px 12px; border-radius: 6px; font-size: 0.75rem;">✓ Ready to sign in</span>
                         </div>
                     </div>
                 </div>
                 ''', unsafe_allow_html=True)
                 
                 # Login button
-                if st.button("Sign In", key="quick_login_btn", use_container_width=True, type="primary"):
+                if st.button("🚀 Sign In Now", key="quick_login_btn", use_container_width=True, type="primary"):
                     user_data = authenticate_user(selected_email, selected_user['password'])
                     if user_data:
                         st.session_state.logged_in = True
@@ -588,27 +730,38 @@ def show_login_page():
         st.markdown("")  # Spacing
         
         # Center the manual login form
-        col1, col2, col3 = st.columns([1, 2, 1])
+        col1, col2, col3 = st.columns([1, 2.5, 1])
         
         with col2:
-            st.markdown('<div class="manual-login-header"><p class="manual-login-title">Sign in with your credentials</p><p class="manual-login-desc">Enter your email and password below</p></div>', unsafe_allow_html=True)
+            st.markdown("""
+            <div class="manual-login-header">
+                <div style="width: 56px; height: 56px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; margin: 0 auto 1rem; box-shadow: 0 8px 24px rgba(99, 102, 241, 0.3);">🔐</div>
+                <p class="manual-login-title">Sign in with your credentials</p>
+                <p class="manual-login-desc">Enter your email and password to access the system</p>
+            </div>
+            """, unsafe_allow_html=True)
             
             # Manual Login Form
             with st.form("login_form", clear_on_submit=False):
+                st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem;">📧 Email Address</p>', unsafe_allow_html=True)
                 email = st.text_input(
                     "Email Address",
                     placeholder="Enter your email address",
-                    help="Use one of the test account emails"
+                    help="Use one of the test account emails",
+                    label_visibility="collapsed"
                 )
+                
+                st.markdown('<p style="color: #94a3b8; font-size: 0.85rem; margin-bottom: 0.25rem; margin-top: 1rem;">🔑 Password</p>', unsafe_allow_html=True)
                 password = st.text_input(
                     "Password", 
                     type="password",
                     placeholder="Enter your password",
-                    help="Password for the test account"
+                    help="Password for the test account",
+                    label_visibility="collapsed"
                 )
                 
-                st.markdown("&nbsp;", unsafe_allow_html=True)
-                submitted = st.form_submit_button("Sign In", use_container_width=True, type="primary")
+                st.markdown("<div style='height: 1.5rem;'></div>", unsafe_allow_html=True)
+                submitted = st.form_submit_button("🚀 Sign In", use_container_width=True, type="primary")
                 
                 if submitted:
                     if email and password:
@@ -618,34 +771,86 @@ def show_login_page():
                             st.session_state.user = user_data
                             st.rerun()
                         else:
-                            st.error("Invalid email or password. Please try again.")
+                            st.error("❌ Invalid email or password. Please try again.")
                     else:
-                        st.warning("Please enter both email and password.")
+                        st.warning("⚠️ Please enter both email and password.")
             
-            # Credentials reference
-            with st.expander("📋 View Test Account Credentials"):
+            # Credentials reference - All Test Accounts
+            with st.expander("📋 View All Test Account Credentials", expanded=False):
                 st.markdown("""
-                **Super System4 Admin:**
-                - `ceo@system4.com` / `ceo123`
-                - `cto@system4.com` / `cto123`
+                <div class="cred-section">
+                    <div class="cred-section-header">
+                        <div class="cred-section-icon" style="background: linear-gradient(135deg, #fbbf24, #f59e0b);">👑</div>
+                        <div>
+                            <p class="cred-section-title">Super System4 Admin</p>
+                            <p class="cred-section-desc">Full system access • All franchises • Complete control</p>
+                        </div>
+                    </div>
+                    <div class="cred-item"><span class="cred-email">ceo@system4.com</span><span class="cred-password">ceo123</span></div>
+                    <div class="cred-item"><span class="cred-email">cto@system4.com</span><span class="cred-password">cto123</span></div>
+                </div>
                 
-                **System4 Admin:**
-                - `manager@system4.com` / `manager123`
-                - `analyst@system4.com` / `analyst123`
-                - `support@system4.com` / `support123`
+                <div class="cred-section">
+                    <div class="cred-section-header">
+                        <div class="cred-section-icon" style="background: linear-gradient(135deg, #6366f1, #8b5cf6);">🔧</div>
+                        <div>
+                            <p class="cred-section-title">System4 Admin</p>
+                            <p class="cred-section-desc">Corporate staff • View all franchises • Reports & analytics</p>
+                        </div>
+                    </div>
+                    <div class="cred-item"><span class="cred-email">manager@system4.com</span><span class="cred-password">manager123</span></div>
+                    <div class="cred-item"><span class="cred-email">analyst@system4.com</span><span class="cred-password">analyst123</span></div>
+                    <div class="cred-item"><span class="cred-email">support@system4.com</span><span class="cred-password">support123</span></div>
+                </div>
                 
-                **Franchise Partner:**
-                - `owner.boston@franchise.com` / `boston123`
-                - `owner.cleveland@franchise.com` / `cleveland123`
-                - `owner.chicago@franchise.com` / `chicago123`
+                <div class="cred-section">
+                    <div class="cred-section-header">
+                        <div class="cred-section-icon" style="background: linear-gradient(135deg, #10b981, #059669);">🏢</div>
+                        <div>
+                            <p class="cred-section-title">Franchise Partner</p>
+                            <p class="cred-section-desc">Franchise owners • Full franchise access • Manage employees</p>
+                        </div>
+                    </div>
+                    <div class="cred-item"><span class="cred-email">owner.boston@franchise.com</span><span class="cred-password">boston123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.cleveland@franchise.com</span><span class="cred-password">cleveland123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.chicago@franchise.com</span><span class="cred-password">chicago123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.charleston@franchise.com</span><span class="cred-password">charleston123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.columbia@franchise.com</span><span class="cred-password">columbia123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.georgia@franchise.com</span><span class="cred-password">georgia123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.maryland@franchise.com</span><span class="cred-password">maryland123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.nova@franchise.com</span><span class="cred-password">nova123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.richmond@franchise.com</span><span class="cred-password">richmond123</span></div>
+                    <div class="cred-item"><span class="cred-email">owner.dc@franchise.com</span><span class="cred-password">dc123</span></div>
+                </div>
                 
-                **Client Admin:**
-                - `staff.boston@franchise.com` / `staff123`
-                - `staff.cleveland@franchise.com` / `staff456`
-                """)
+                <div class="cred-section">
+                    <div class="cred-section-header">
+                        <div class="cred-section-icon" style="background: linear-gradient(135deg, #0ea5e9, #0284c7);">👤</div>
+                        <div>
+                            <p class="cred-section-title">Client Admin</p>
+                            <p class="cred-section-desc">Franchise employees • Limited access • Basic reports</p>
+                        </div>
+                    </div>
+                    <div class="cred-item"><span class="cred-email">staff.boston@franchise.com</span><span class="cred-password">staff123</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.cleveland@franchise.com</span><span class="cred-password">staff456</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.charleston@franchise.com</span><span class="cred-password">staff789</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.columbia@franchise.com</span><span class="cred-password">staff101</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.georgia@franchise.com</span><span class="cred-password">staff102</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.maryland@franchise.com</span><span class="cred-password">staff103</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.nova@franchise.com</span><span class="cred-password">staff104</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.richmond@franchise.com</span><span class="cred-password">staff105</span></div>
+                    <div class="cred-item"><span class="cred-email">staff.dc@franchise.com</span><span class="cred-password">staff106</span></div>
+                </div>
+                """, unsafe_allow_html=True)
     
     # Footer
-    st.markdown('<div class="login-footer"><p>FMS Query Engine v2.0 • Powered by AI</p><p>© 2025 System4 Enterprise Analytics</p></div>', unsafe_allow_html=True)
+    st.markdown('''
+    <div class="login-footer">
+        <p style="font-size: 1rem; color: #f1f5f9; font-weight: 600; margin-bottom: 0.5rem;">⚡ FMS Query Engine v2.0</p>
+        <p>Powered by OpenAI GPT-4 & Anthropic Claude • MongoDB Backend</p>
+        <p style="margin-top: 0.75rem;">© 2025 System4 Enterprise Analytics Suite</p>
+    </div>
+    ''', unsafe_allow_html=True)
 
 
 def get_secret(key, default=None):
